@@ -1,37 +1,48 @@
-"use client"
+"use client";
+
 import useRegisterModal from "@/hooks/useRegisterModal";
-import React, { Dispatch, SetStateAction, useCallback, useState } from "react";
 import Modal from "../ui/Modal";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { registerStep1Schema, registerStep2Schema } from "@/lib/validation";
-import * as z from'zod'
-import { zodResolver} from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { RegisterStep1Schema, RegisterStep2Schema } from "@/lib/validation";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "../ui/form";
 import { Input } from "../ui/input";
 import Button from "../ui/button";
 import useLoginModal from "@/hooks/useLoginModal";
+import axios from "axios";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { AlertCircle } from "lucide-react";
 
 
+export default function RegisterModal() {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState({ name: "", email: "" });
 
-export default function Registermodal() {
+  const registerModal = useRegisterModal();
+  const loginModal = useLoginModal();
 
-    const [step, setStep] = useState(1);
-    const [data, setData] = useState({ name: "", email: "" });
-    const registerModal = useRegisterModal();
-    const loginModal = useLoginModal();
-        
   const onToggle = useCallback(() => {
     registerModal.onClose();
     loginModal.onOpen();
   }, [loginModal, registerModal]);
-    const bodyContent =
+
+  const bodyContent =
     step === 1 ? (
       <RegisterStep1 setData={setData} setStep={setStep} />
     ) : (
-      <RegisterStep2  />
-    );   
-    const footer = (
-        <div className="text-neutral-400 text-center mb-4">
+      <RegisterStep2 data={data} />
+    );
+
+  const footer = (
+      <div className="text-neutral-400 text-center mb-4">
         <p>
           Already have an account?{" "}
           <span
@@ -42,38 +53,63 @@ export default function Registermodal() {
           </span>
         </p>
       </div>
-    )
-    return (
-        <Modal 
-            step={step}
-            totalStep={2}
-            body={bodyContent}
-            footer={footer}
-            isOpen={registerModal.isOpen}
-            onClose={registerModal.onClose}
-        />
-    )
+  );
+
+  return (
+    <Modal
+      body={bodyContent}
+      footer={footer}
+      isOpen={registerModal.isOpen}
+      onClose={registerModal.onClose}
+    />
+  );
 }
 
-function RegisterStep1({setData, setStep}: {setData: Dispatch<SetStateAction<{name: string; email: string}>>;
-    setStep: Dispatch<SetStateAction<number>>
+function RegisterStep1({
+  setData,
+  setStep,
+}: {
+  setData: Dispatch<SetStateAction<{ name: string; email: string }>>;
+  setStep: Dispatch<SetStateAction<number>>;
 }) {
-    const form = useForm<z.infer<typeof registerStep1Schema>>({
-        resolver: zodResolver(registerStep1Schema),
-        defaultValues: {
-            email: "",
-            name: "",
-        },
-      })
+  const [error, setError] = useState("");
 
-      function onSubmit(values: z.infer<typeof registerStep1Schema>) {
-        setData({...values});
+  const form = useForm<z.infer<typeof RegisterStep1Schema>>({
+    resolver: zodResolver(RegisterStep1Schema),
+    defaultValues: {
+      email: "",
+      name: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof RegisterStep1Schema>) {
+    try {
+      const { data } = await axios.post("/api/auth/register?step=1", values);
+      if (data.success) {
+        setData(values);
         setStep(2);
       }
-      const {isSubmitting} = form.formState
-    return(
-        <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-12">
+    } catch (error: any) {
+      if (error.response.data.error) {
+        setError(error.response.data.error);
+      } else {
+        setError("Something went wrong. Please try again later.");
+      }
+    }
+  }
+
+  const { isSubmitting } = form.formState;
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-12">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <FormField
           control={form.control}
           name="name"
@@ -86,69 +122,106 @@ function RegisterStep1({setData, setStep}: {setData: Dispatch<SetStateAction<{na
             </FormItem>
           )}
         />
-
         <FormField
-            control={form.control}
-            name="email"
-            render={({field}) => (
-                <FormItem>
-                    <FormControl>
-                        <Input placeholder="Email" {...field}/>
-                    </FormControl>
-                </FormItem>
-            )}
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="Email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        <Button label={"Next"} type="submit" secondary fullWidth large disabled={isSubmitting}/>
-
+        <Button
+          label={"Next"}
+          type="submit"
+          secondary
+          fullWidth
+          large
+          disabled={isSubmitting}
+        />
       </form>
-        </Form>
-    )
+    </Form>
+  );
 }
 
-function RegisterStep2() {
-    const form = useForm<z.infer<typeof registerStep2Schema>>({
-        resolver: zodResolver(registerStep1Schema),
-        defaultValues: {
-            password: "",
-            username: "",   
-        },
-      })
+function RegisterStep2({ data }: { data: { name: string; email: string } }) {
+  const [error, setError] = useState("");
+  const registerModal = useRegisterModal();
 
-      function onSubmit(values: z.infer<typeof registerStep2Schema>) {
-        console.log(values);
-        
+  const form = useForm<z.infer<typeof RegisterStep2Schema>>({
+    resolver: zodResolver(RegisterStep2Schema),
+    defaultValues: {
+      password: "",
+      username: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof RegisterStep2Schema>) {
+    try {
+        const { data: response } = await axios.post("/api/auth/register?step=2", {
+          ...data,
+          ...values,
+        });
+        if (response.success) {
+          
+          registerModal.onClose();
+        }
+    } catch (error: any) {
+      if (error.response.data.error) {
+        setError(error.response.data.error);
+      } else {
+        setError("Something went wrong. Please try again later.");
       }
-      const {isSubmitting} = form.formState
-    return(
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-12">
-        <FormField
-        control={form.control}
-        name="username"
-        render={({ field }) => (
-        <FormItem>
-        <FormControl>
-        <Input placeholder="Username" {...field} />
-        </FormControl>
-        <FormMessage />
-        </FormItem>
+    }
+  }
+
+  const { isSubmitting } = form.formState;
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-12">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
-/>
-
-<FormField
-  control={form.control}
-  name="password"
-  render={({field}) => (
-      <FormItem>
-          <FormControl>
-              <Input placeholder="Password" type="password" {...field}/>
-          </FormControl>
-      </FormItem>
-  )}
-/>
-<Button label={"Register"} type="submit" secondary fullWidth large disabled={isSubmitting}/>
-
-</form>
-</Form>
-    )
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="Username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="Password" type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button
+          label={"Register"}
+          type="submit"
+          secondary
+          fullWidth
+          large
+          disabled={isSubmitting}
+        />
+      </form>
+    </Form>
+  );
 }
