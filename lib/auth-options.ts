@@ -52,7 +52,6 @@ export const authOptions: AuthOptions = {
           return session;
         },
       },
-    debug: process.env.NODE_ENV === 'development',
     session: {strategy: "jwt"},
     jwt: { secret: process.env.NEXT_AUTH_JWT },
     secret: process.env.NEXT_AUTH_SECRET!,
