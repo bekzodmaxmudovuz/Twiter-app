@@ -2,7 +2,6 @@ import Post from "@/database/post.model";
 import User from "@/database/user.model";
 import { authOptions } from "@/lib/auth-options";
 import { connectToDatabase } from "@/lib/mongoose";
-
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -14,7 +13,7 @@ export async function POST(req: Request) {
 
     const post = await Post.create({ body, user: userId });
 
-    return NextResponse.json(post);
+    return NextResponse.json({post});
   } catch (error) {
     const result = error as Error;
     return NextResponse.json({ error: result.message }, { status: 400 });
