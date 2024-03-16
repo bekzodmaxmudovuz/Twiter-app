@@ -1,78 +1,55 @@
-"use client";
+"use client"
 
 import { IPost, IUser } from "@/types";
-import { Dispatch, SetStateAction, useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Button from "../ui/button";
 import { toast } from "../ui/use-toast";
 import axios from "axios";
-import user from "./user";
 
 interface Props {
-  placeholder: string;
+  placeholder: string;  
   user: IUser;
-  setPosts: Dispatch<SetStateAction<IPost[]>>;
-  postId?: string;
-  isComment?: boolean;
 }
-
-const Form = ({ placeholder, user, setPosts, isComment, postId }: Props) => {
+const Form =  ({placeholder, user}: Props ) => {
   const [body, setBody] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, steIsLoading] = useState(false)
 
-  const onSubmit = async () => {
+  const  onSubmit  = async () =>{
     try {
-      setIsLoading(true);
-      if (isComment) {
-        const { data } = await axios.post("/api/comments", {
-          body,
-          userId: user._id,
-          postId,
-        });
-        const newComment = {
-          ...data,
-          user,
-          likes: 0,
-          hasLiked: false,
-        };
-        setPosts((prev) => [newComment, ...prev]);
-      } else {
+        steIsLoading(true)
         const { data } = await axios.post("/api/posts", {
           body,
           userId: user._id,
         });
-        const newPost = {
-          ...data,
-          user,
-          likes: 0,
-          hasLiked: false,
-          comments: 0,
-        };
-        setPosts((prev) => [newPost, ...prev]);
-      }
-      setIsLoading(false);
-      setBody("");
-    } catch (error) {
-      setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
+        console.log(data);
+        steIsLoading(false)
+        setBody("")
+        toast({
+          title : "Success",
+          description : "Post created successfully.",
+        })
         
-      });
+    } catch (error) {
+      steIsLoading(false)
+      toast({
+        title : "Error",
+        description : "Something went wrong, Please  try again later.",
+        variant: "destructive"
+      })
+      
     }
-  };
-
+  }
   return (
     <div className="border-b-[1px] border-neutral-800 px-5 py-2">
       <div className="flex flex-row gap-4">
         <Avatar>
-          <AvatarImage src={user.profileImage} />
+          <AvatarImage src={user.profileImage}/>
           <AvatarFallback>{user.name[0]}</AvatarFallback>
         </Avatar>
 
         <div className="w-full">
-          <textarea
+        <textarea
             className="disabled:opacity-80 peer resize-none mt-3 w-full bg-black ring-0 outline-none text-[20px] placeholder-neutral-500 text-white h-[50px]"
             placeholder={placeholder}
             disabled={isLoading}
@@ -84,7 +61,7 @@ const Form = ({ placeholder, user, setPosts, isComment, postId }: Props) => {
 
           <div className="mt-4 flex flex-row justify-end">
             <Button
-              label={isComment ? "Reply" : "Post"}
+              label={"Post"}
               classNames="px-8"
               disabled={isLoading || !body}
               onClick={onSubmit}
@@ -93,7 +70,7 @@ const Form = ({ placeholder, user, setPosts, isComment, postId }: Props) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Form;
+export default Form
