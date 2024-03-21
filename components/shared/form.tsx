@@ -10,8 +10,9 @@ import axios from "axios";
 interface Props {
   placeholder: string;  
   user: IUser;
+  setPosts: Dispatch<SetStateAction<IPost[]>>;
 }
-const Form =  ({placeholder, user}: Props ) => {
+const Form =  ({placeholder, user, setPosts}: Props ) => {
   const [body, setBody] = useState("");
   const [isLoading, steIsLoading] = useState(false)
 
@@ -22,7 +23,8 @@ const Form =  ({placeholder, user}: Props ) => {
           body,
           userId: user._id,
         });
-        console.log(data);
+        const newPost = {...data, user};
+        setPosts((prev) => [newPost, ...prev])
         steIsLoading(false)
         setBody("")
         toast({

@@ -1,7 +1,9 @@
 "use client"
 import Form from "@/components/shared/form";
 import Header from "@/components/shared/header";
+import PostItem from "@/components/shared/post-item";
 import { authOptions } from "@/lib/auth-options";
+import { IPost } from "@/types";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import { getServerSession } from "next-auth";
@@ -10,18 +12,23 @@ import { useEffect, useState } from "react";
 
 export default function Page () {
   const {data: session, status}:any = useSession();
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [posts, setPosts] = useState<IPost[]>([]);
 
   useEffect(() => {
     const getPosts = async () => {
       try {
         setIsLoading(true)
-        const {data}  = await axios.get("/api/posts?limit=10" )
+        const {data}  = await axios.get("/api/posts?limit=10" );
+        setPosts(data);
+        setIsLoading(false);
+        
       } catch (error) {
         console.log(error);
         setIsLoading(false)        
       }
     }
+    getPosts();
   }, [])
   return (
     <>
@@ -32,10 +39,19 @@ export default function Page () {
         </div>
       ): (
         <>
-                <Form 
+      <Form 
         placeholder="What's on your mind?"
         user={JSON.parse(JSON.stringify(session.currentUser))}
-      />
+        setPosts={setPosts}
+        />
+          {posts.map((post) => (
+            <PostItem
+              key={post._id}
+              post={post}
+              user={JSON.parse(JSON.stringify(session.currentUser))}
+              setPosts={setPosts}
+            />
+          ))}
         </>
       )}
 
