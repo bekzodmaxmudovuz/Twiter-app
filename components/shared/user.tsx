@@ -3,7 +3,8 @@ import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { sliceText } from "@/lib/utils";
 
-const User = ({ user }: { user: IUser }) => {
+
+const User = ( {user }: { user: IUser }) => {
     return (
         <div className="flex gap-3 items-center justify-between cursor-pointer hover:bg-slate-300 hover:bg-opacity-10 transition py-2 px-3 rounded-md">
         <div className="flex gap-2 cursor-pointer">

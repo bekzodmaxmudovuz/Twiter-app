@@ -50,6 +50,7 @@ export default function Page () {
               post={post}
               user={JSON.parse(JSON.stringify(session.currentUser))}
               setPosts={setPosts}
+             
             />
           ))}
         </>
